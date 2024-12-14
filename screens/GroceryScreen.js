@@ -4,6 +4,7 @@ import { supabase } from '../services/supabaseClient'; // Adjust path as needed
 
 const GroceryScreen = ({ navigation }) => {
   const [items, setItems] = useState([]);
+  const [cart, setCart] = useState([]); // Local cart state
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,13 +21,22 @@ const GroceryScreen = ({ navigation }) => {
     fetchData();
   }, []);
 
+  // Add item to cart
+  const addToCart = (item) => {
+    setCart((prevCart) => [...prevCart, item]); // Add item to cart
+    console.log('Item added to cart:', item);
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Image source={{ uri: item.image }} style={styles.image} />
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.price}>${item.price}</Text>
       <Text style={styles.rating}>Rating: {item.rating}</Text>
-      <TouchableOpacity style={styles.button} onPress={() => console.log('Item added to cart')}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => addToCart(item)} // Add item to cart
+      >
         <Text style={styles.buttonText}>Add to Cart</Text>
       </TouchableOpacity>
     </View>
@@ -51,7 +61,10 @@ const GroceryScreen = ({ navigation }) => {
           <Image source={require('./assets/icons/orders.png')} style={styles.icon} />
           <Text style={styles.iconText}>Order</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Cart')}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => navigation.navigate('Cart', { cart })} // Pass cart to CartScreen
+        >
           <Image source={require('./assets/icons/cart.png')} style={styles.icon} />
           <Text style={styles.iconText}>Cart</Text>
         </TouchableOpacity>
@@ -115,6 +128,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     backgroundColor: 'red',
+    paddingVertical: 10,
     position: 'absolute',
     bottom: 0,
     width: '100%',

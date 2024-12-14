@@ -1,63 +1,59 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, AsyncStorage } from 'react-native';
 import { supabase } from '../services/supabaseClient';
 
-const OrdersScreen = ({ navigation }) => {
+const OrderHistoryScreen = () => {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null); // Store the logged-in user ID
 
   useEffect(() => {
-    // Fetch orders for the logged-in user
-    const fetchOrders = async () => {
-      const user = supabase.auth.user();
-      if (!user) {
-        // If no user is logged in, redirect to login
-        navigation.navigate('Login');
-        return;
+    const loadUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('user_id');
+      if (storedUserId) {
+        setUserId(storedUserId); // Set user ID from AsyncStorage
       }
-
-      // Fetch orders for the current user from the orders table
-      const { data, error } = await supabase
-        .from('orders') // Replace 'orders' with your table name
-        .select('*')
-        .eq('user_id', user.id); // Get orders for the logged-in user
-
-      if (error) {
-        Alert.alert('Error', error.message);
-      } else {
-        setOrders(data); // Store orders data
-      }
-      setLoading(false); // Set loading to false once data is fetched
     };
 
-    fetchOrders();
-  }, [navigation]);
+    loadUserId(); // Get user ID when the component mounts
+  }, []);
 
-  const renderItem = ({ item }) => (
-    <View style={styles.orderItem}>
-      <Text style={styles.orderText}>Order ID: {item.id}</Text>
-      <Text style={styles.orderText}>Details: {item.order_details}</Text>
-      <Text style={styles.orderText}>Date: {item.order_date}</Text>
+  useEffect(() => {
+    if (userId) {
+      // Fetch orders only if user ID is available
+      const fetchOrders = async () => {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('user_id', userId) // Only fetch orders for the logged-in user
+          .order('created_at', { ascending: false }); // Order by most recent
+
+        if (error) {
+          console.error('Error fetching orders:', error);
+        } else {
+          setOrders(data);
+        }
+      };
+
+      fetchOrders();
+    }
+  }, [userId]); // Run the fetch when the user ID is set
+
+  const renderOrder = ({ item }) => (
+    <View style={styles.orderCard}>
+      <Text style={styles.orderText}>Item: {item.name}</Text>
+      <Text style={styles.orderText}>Price: {item.price}</Text>
+      <Text style={styles.orderText}>Status: {item.status}</Text>
     </View>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="red" />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Order History</Text>
       {orders.length === 0 ? (
-        <Text style={styles.noOrdersText}>You have no past orders.</Text>
+        <Text style={styles.noOrdersText}>No orders placed yet!</Text>
       ) : (
         <FlatList
           data={orders}
-          renderItem={renderItem}
+          renderItem={renderOrder}
           keyExtractor={(item) => item.id.toString()}
         />
       )}
@@ -66,42 +62,23 @@ const OrdersScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    backgroundColor: 'orange',
-    paddingTop: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'red',
-    marginBottom: 10,
-  },
-  orderItem: {
+  container: { flex: 1, padding: 20, backgroundColor: 'orange' },
+  orderCard: {
     backgroundColor: 'white',
+    marginVertical: 10,
     padding: 15,
-    marginBottom: 10,
-    borderRadius: 5,
-    width: '90%',
-    borderWidth: 1,
-    borderColor: 'red',
+    borderRadius: 10,
   },
   orderText: {
-    color: 'red',
     fontSize: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'orange',
+    color: 'black',
   },
   noOrdersText: {
-    color: 'red',
     fontSize: 18,
+    color: 'black',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 
-export default OrdersScreen;
+export default OrderHistoryScreen;
