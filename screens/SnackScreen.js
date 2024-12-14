@@ -1,54 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { supabase } from '../services/supabaseClient'; // Update the path if needed
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { supabase } from '../services/supabaseClient'; // Adjust path as needed
 
-const SnackScreen = () => {
-  const [snackItems, setSnackItems] = useState([]);
-  const [loading, setLoading] = useState(false);
+const SnackScreen = ({ navigation }) => {
+  const [items, setItems] = useState([]);
 
   useEffect(() => {
-    fetchSnackItems();
+    const fetchData = async () => {
+      const { data, error } = await supabase
+        .from('snack') // Change table name if needed
+        .select('*');
+      if (error) {
+        console.error('Error fetching data:', error);
+      } else {
+        setItems(data);
+      }
+    };
+
+    fetchData();
   }, []);
-
-  const fetchSnackItems = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from('snack').select('*');
-    if (error) {
-      console.error('Error fetching snack items:', error);
-    } else {
-      setSnackItems(data);
-    }
-    setLoading(false);
-  };
-
-  const handleAddToCart = async (item) => {
-    const { data, error } = await supabase.from('cart').insert([
-      {
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        rating: item.rating,
-      },
-    ]);
-
-    if (error) {
-      console.error('Error adding to cart:', error);
-    } else {
-      console.log(`${item.name} added to cart successfully`);
-    }
-  };
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Image source={{ uri: item.image }} style={styles.image} />
       <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.price}>Price: ${item.price.toFixed(2)}</Text>
-      <Text style={styles.rating}>Rating: {item.rating} ⭐</Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => handleAddToCart(item)}
-      >
+      <Text style={styles.price}>${item.price}</Text>
+      <Text style={styles.rating}>Rating: {item.rating}</Text>
+      <TouchableOpacity style={styles.button} onPress={() => console.log('Item added to cart')}>
         <Text style={styles.buttonText}>Add to Cart</Text>
       </TouchableOpacity>
     </View>
@@ -56,17 +34,28 @@ const SnackScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Snack Menu</Text>
-      {loading ? (
-        <Text style={styles.loadingText}>Loading...</Text>
-      ) : (
-        <FlatList
-          data={snackItems}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-        />
-      )}
+      <FlatList
+        data={items}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.list}
+      />
+
+      {/* Bottom Navigation Bar */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Home')}>
+          <Image source={require('./assets/icons/home.png')} style={styles.icon} />
+          <Text style={styles.iconText}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButton} onPress={() => console.log('Navigate to Order')}>
+          <Image source={require('./assets/icons/orders.png')} style={styles.icon} />
+          <Text style={styles.iconText}>Order</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Cart')}>
+          <Image source={require('./assets/icons/cart.png')} style={styles.icon} />
+          <Text style={styles.iconText}>Cart</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -75,68 +64,74 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'orange',
-    padding: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'red',
-    textAlign: 'center',
-    marginVertical: 10,
-  },
-  loadingText: {
-    fontSize: 18,
-    color: 'red',
-    textAlign: 'center',
-    marginVertical: 20,
+    paddingTop: 20,
   },
   list: {
-    paddingBottom: 20,
+    paddingHorizontal: 10,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
+    marginBottom: 20,
+    padding: 10,
     borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 3,
   },
   image: {
     width: 150,
-    height: 150,
+    height: 100,
     borderRadius: 10,
-    marginBottom: 10,
+    resizeMode: 'cover',
   },
   name: {
+    color: 'red',
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'red',
+    marginVertical: 10,
   },
   price: {
+    color: 'black',
     fontSize: 16,
-    color: '#333',
-    marginVertical: 5,
   },
   rating: {
+    color: 'black',
     fontSize: 14,
-    color: '#666',
   },
   button: {
     backgroundColor: 'red',
     padding: 10,
     borderRadius: 5,
     marginTop: 10,
-    width: '80%',
-    alignItems: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+  },
+  bottomBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: 'red',
+    paddingVertical: 10,
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    alignItems: 'center',
+  },
+  iconButton: {
+    alignItems: 'center',
+  },
+  icon: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+  },
+  iconText: {
+    color: 'white',
+    fontSize: 12,
   },
 });
 

@@ -1,72 +1,78 @@
 import React, { useState } from 'react';
-import { TextInput, View, Text, Alert, TouchableOpacity } from 'react-native';
-import { supabase } from '../services/supabaseClient'; // Adjust the path as needed
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { supabase } from '../services/supabaseClient';
 
-const Auth = () => {
+const SignUpScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSignUp = async () => {
-    try {
-      // Sign up user without email verification
-      const { user, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+    // Check if user already exists using the email
+    const { data: existingUser, error: existingUserError } = await supabase
+      .from('users') // Replace 'users' with your users table if it's custom, otherwise use auth
+      .select('id')
+      .eq('email', email)
+      .single();
 
-      if (error) {
-        Alert.alert('Error', error.message);
-      } else {
-        Alert.alert('Success', 'User signed up successfully.');
-      }
-    } catch (error) {
-      Alert.alert('Error', error.message);
+    if (existingUser) {
+      // If user exists, show an alert
+      Alert.alert('Error', 'User with this email already exists. Please log in.');
+      return;
+    }
+
+    // If no existing user, proceed with sign-up
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      Alert.alert('Sign Up Error', error.message);
+    } else {
+      // On successful sign-up, navigate to Login screen
+      Alert.alert('Success', 'Account created successfully. Please log in.');
+      navigation.navigate('Login');
     }
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 20, backgroundColor: 'orange' }}>
+    <View style={styles.container}>
+      <Text style={styles.title}>Sign Up</Text>
       <TextInput
+        style={styles.input}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
-        style={{
-          marginBottom: 10,
-          borderWidth: 1,
-          padding: 10,
-          color: 'red', // Text color red (foreground)
-          borderColor: 'red',
-        }}
       />
       <TextInput
+        style={styles.input}
         placeholder="Password"
+        secureTextEntry
         value={password}
         onChangeText={setPassword}
-        secureTextEntry
-        style={{
-          marginBottom: 20,
-          borderWidth: 1,
-          padding: 10,
-          color: 'red', // Text color red (foreground)
-          borderColor: 'red',
-        }}
       />
-      {/* Custom Sign Up button with red foreground and orange background */}
-      <TouchableOpacity 
-        onPress={handleSignUp} 
-        style={{
-          backgroundColor: 'orange', 
-          paddingVertical: 10, 
-          paddingHorizontal: 50, 
-          borderRadius: 5, 
-          marginBottom: 10,
-          borderColor: 'red',
-          borderWidth: 2,
-        }}>
-        <Text style={{ color: 'red', fontWeight: 'bold', textAlign: 'center' }}>Sign Up</Text>
-      </TouchableOpacity>
+      <Button title="Sign Up" onPress={handleSignUp} />
+      <Text onPress={() => navigation.navigate('Login')} style={styles.link}>
+        Already have an account? Log In
+      </Text>
     </View>
   );
 };
 
-export default Auth;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'orange',
+  },
+  title: { fontSize: 24, fontWeight: 'bold', color: 'red' },
+  input: {
+    width: '80%',
+    padding: 10,
+    margin: 10,
+    borderWidth: 1,
+    borderColor: 'red',
+    borderRadius: 5,
+    backgroundColor: 'white',
+  },
+  link: { color: 'red', marginTop: 10 },
+});
+
+export default SignUpScreen;

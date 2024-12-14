@@ -1,43 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { supabase } from '../services/supabaseClient'; // Adjust the import path as per your project structure
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { supabase } from '../services/supabaseClient'; // Adjust path as needed
 
-const CakeScreen = () => {
-  const [cakes, setCakes] = useState([]);
-  const [loading, setLoading] = useState(false);
+const CakeScreen = ({ navigation }) => {
+  const [items, setItems] = useState([]);
 
   useEffect(() => {
-    fetchCakes();
+    const fetchData = async () => {
+      const { data, error } = await supabase
+        .from('cake') // Change table name if needed
+        .select('*');
+      if (error) {
+        console.error('Error fetching data:', error);
+      } else {
+        setItems(data);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // Fetch cakes data from Supabase
-  const fetchCakes = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from('cake').select('*');
-    if (error) {
-      console.error('Error fetching cakes:', error);
-    } else {
-      setCakes(data);
-    }
-    setLoading(false);
-  };
-
-  // Handle Add to Cart button
-  const handleAddToCart = (cake) => {
-    console.log(`Added to cart: ${cake.name}`);
-    // You can implement further logic for adding the item to a cart
-  };
-
-  const renderCakeItem = ({ item }) => (
+  const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Image source={{ uri: item.image }} style={styles.image} />
       <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.price}>Price: ${item.price.toFixed(2)}</Text>
-      <Text style={styles.rating}>Rating: {item.rating} ⭐</Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => handleAddToCart(item)}
-      >
+      <Text style={styles.price}>${item.price}</Text>
+      <Text style={styles.rating}>Rating: {item.rating}</Text>
+      <TouchableOpacity style={styles.button} onPress={() => console.log('Item added to cart')}>
         <Text style={styles.buttonText}>Add to Cart</Text>
       </TouchableOpacity>
     </View>
@@ -45,17 +34,28 @@ const CakeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cake Menu</Text>
-      {loading ? (
-        <Text style={styles.loadingText}>Loading...</Text>
-      ) : (
-        <FlatList
-          data={cakes}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderCakeItem}
-          contentContainerStyle={styles.list}
-        />
-      )}
+      <FlatList
+        data={items}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.list}
+      />
+
+      {/* Bottom Navigation Bar */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Home')}>
+          <Image source={require('./assets/icons/home.png')} style={styles.icon} />
+          <Text style={styles.iconText}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButton} onPress={() => console.log('Navigate to Order')}>
+          <Image source={require('./assets/icons/orders.png')} style={styles.icon} />
+          <Text style={styles.iconText}>Order</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Cart')}>
+          <Image source={require('./assets/icons/cart.png')} style={styles.icon} />
+          <Text style={styles.iconText}>Cart</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -63,69 +63,75 @@ const CakeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'orange', // Background color
-    padding: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'red', // Foreground color
-    textAlign: 'center',
-    marginVertical: 10,
-  },
-  loadingText: {
-    fontSize: 18,
-    color: 'red', // Foreground color
-    textAlign: 'center',
-    marginVertical: 20,
+    backgroundColor: 'orange',
+    paddingTop: 20,
   },
   list: {
-    paddingBottom: 20,
+    paddingHorizontal: 10,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
+    marginBottom: 20,
+    padding: 10,
     borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 3,
   },
   image: {
     width: 150,
-    height: 150,
+    height: 100,
     borderRadius: 10,
-    marginBottom: 10,
+    resizeMode: 'cover',
   },
   name: {
+    color: 'red',
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'red', // Foreground color
+    marginVertical: 10,
   },
   price: {
+    color: 'black',
     fontSize: 16,
-    color: '#333',
-    marginVertical: 5,
   },
   rating: {
+    color: 'black',
     fontSize: 14,
-    color: '#666',
   },
   button: {
-    backgroundColor: 'red', // Button color
+    backgroundColor: 'red',
     padding: 10,
     borderRadius: 5,
     marginTop: 10,
-    width: '80%',
-    alignItems: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+  },
+  bottomBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: 'red',
+    paddingVertical: 10,
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    alignItems: 'center',
+  },
+  iconButton: {
+    alignItems: 'center',
+  },
+  icon: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+  },
+  iconText: {
+    color: 'white',
+    fontSize: 12,
   },
 });
 

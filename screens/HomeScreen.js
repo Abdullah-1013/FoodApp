@@ -1,301 +1,100 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  FlatList,
-  StyleSheet,
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { supabase } from '../services/supabaseClient'; // Adjust the path based on your folder structure
+import React from 'react';
+import { View, Text, FlatList, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
 
-import CartScreen from './CartScreen';
-import OrderHistoryScreen from './OrderHistoryScreen';
-import LoginScreen from './LoginScreen';
-import SignupScreen from './SignUpScreen';
-import MenuScreen from './MenuScreen';
-
-const Tab = createBottomTabNavigator();
-
-const dealsData = [
-  { id: '1', image: require('./assets/images/pizza.jpg'), label: 'Hot Deal 1 - 50% off on Pizza' },
-  { id: '2', image: require('./assets/images/burger.jpg'), label: 'Hot Deal 2 - Buy 1 Get 1 Free Burger' },
-  { id: '3', image: require('./assets/images/fries.jpg'), label: 'Hot Deal 3 - Buy any item get 1 fries free' },
-  { id: '4', image: require('./assets/images/pasta.jpg'), label: 'Hot Deal 4 - 20% off on Pasta' },
-];
-
-const featuredProductsData = [
-  { id: '1', image: require('./assets/images/donut.jpg'), label: 'Chocolate Donut', price: 'Pkr 200' },
-  { id: '2', image: require('./assets/images/coffee.jpg'), label: 'Cappuccino', price: 'Pkr 500' },
-  { id: '3', image: require('./assets/images/salad.jpg'), label: 'Fresh Salad', price: 'Pkr 300' },
+// Categories data with images
+const categories = [
+  { id: '1', name: 'Burgers', image: require('./assets/images/burgers.jpg') },
+  { id: '2', name: 'Pizzas', image: require('./assets/images/pizza.jpg') },
+  { id: '3', name: 'Drinks', image: require('./assets/images/drinks.jpg') },
+  { id: '4', name: 'Cakes', image: require('./assets/images/cake.jpg') },
+  { id: '5', name: 'Bakery', image: require('./assets/images/bakery.jpg') },
+  { id: '6', name: 'Grocery', image: require('./assets/images/grocery.jpg') },
+  { id: '7', name: 'Snacks', image: require('./assets/images/snacks.jpg') },
 ];
 
 const HomeScreen = ({ navigation }) => {
-  const [cart, setCart] = useState([]);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const currentUser = supabase.auth.user();
-      if (!currentUser) {
-        navigation.navigate('Login');
-      } else {
-        setUser(currentUser);
-      }
-    };
-
-    checkUser();
-  }, [navigation]);
-
-  // Function to handle adding deals to cart
-  const handleDealClick = (dealLabel, dealImage) => {
-    Alert.alert(
-      'Add to Cart',
-      `Do you want to add "${dealLabel}" to your cart?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Yes',
-          onPress: () => {
-            setCart((prevCart) => [...prevCart, { label: dealLabel, image: dealImage }]);
-            Alert.alert('Added to Cart', `"${dealLabel}" has been added successfully!`);
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  // Function to handle adding featured products to cart
-  const handleProductClick = (productLabel, productPrice) => {
-    Alert.alert(
-      'Add to Cart',
-      `Do you want to add "${productLabel}" (${productPrice}) to your cart?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Yes',
-          onPress: () => {
-            setCart((prevCart) => [...prevCart, { label: productLabel, price: productPrice }]);
-            Alert.alert('Added to Cart', `"${productLabel}" has been added successfully!`);
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  return (
-    <ScrollView style={styles.container}>
-      {/* Deals section */}
-      <View style={styles.dealsContainer}>
-        <Text style={styles.dealsTitle}>Hot Deals</Text>
-        <FlatList
-          data={dealsData}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handleDealClick(item.label, item.image)}>
-              <View style={styles.dealItem}>
-                <Image source={item.image} style={styles.dealImage} />
-                <Text style={styles.dealLabel}>{item.label}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
-
-      {/* Featured Products section */}
-      <View style={styles.featuredContainer}>
-        <Text style={styles.featuredTitle}>Featured Products</Text>
-        <FlatList
-          data={featuredProductsData}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handleProductClick(item.label, item.price)}>
-              <View style={styles.featuredItem}>
-                <Image source={item.image} style={styles.featuredImage} />
-                <Text style={styles.featuredLabel}>{item.label}</Text>
-                <Text style={styles.featuredPrice}>{item.price}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
-    </ScrollView>
-  );
-};
-
-// Tab navigation
-const HomeTabNavigator = () => {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabBarLabel,
-      }}
+  const renderCategory = ({ item }) => (
+    <TouchableOpacity
+      style={styles.categoryCard}
+      onPress={() => navigation.navigate(item.name)} // Navigate to the category screen based on name
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: () => (
-            <Image
-              source={require('./assets/icons/home.png')}
-              style={styles.tabBarIcon}
-            />
-          ),
-        }}
+      <Image source={item.image} style={styles.categoryImage} />
+      <Text style={styles.categoryText}>{item.name}</Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      {/* Categories Swipe Section */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
+        {categories.map((category) => (
+          <View key={category.id} style={styles.categoryWrapper}>
+            {renderCategory({ item: category })}
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Categories FlatList Section (Two categories per row) */}
+      <FlatList
+        data={categories}
+        renderItem={renderCategory}
+        keyExtractor={(item) => item.id}
+        numColumns={2} // Display two categories per row
+        contentContainerStyle={styles.flatListContainer}
       />
-      <Tab.Screen
-        name="Menu"
-        component={MenuScreen}
-        options={{
-          tabBarLabel: 'Menu',
-          tabBarIcon: () => (
-            <Image
-              source={require('./assets/icons/menu.png')}
-              style={styles.tabBarIcon}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Cart"
-        component={CartScreen}
-        options={{
-          tabBarLabel: 'Cart',
-          tabBarIcon: () => (
-            <Image
-              source={require('./assets/icons/cart.png')}
-              style={styles.tabBarIcon}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Order History"
-        component={OrderHistoryScreen}
-        options={{
-          tabBarLabel: 'Orders',
-          tabBarIcon: () => (
-            <Image
-              source={require('./assets/icons/orders.png')}
-              style={styles.tabBarIcon}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Login"
-        component={LoginScreen}
-        options={{
-          tabBarLabel: 'Login',
-          tabBarIcon: () => (
-            <Image
-              source={require('./assets/icons/login.png')}
-              style={styles.tabBarIcon}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Signup"
-        component={SignupScreen}
-        options={{
-          tabBarLabel: 'Sign Up',
-          tabBarIcon: () => (
-            <Image
-              source={require('./assets/icons/signup.png')}
-              style={styles.tabBarIcon}
-            />
-          ),
-        }}
-      />
-    </Tab.Navigator>
+    </View>
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'orange',
+    paddingTop: 20,
+    paddingBottom: 20, // Adjust bottom padding
+  },
+  categoriesContainer: {
+    marginBottom: 20, // Adjust margin to push categories lower
+    marginTop: 20, // Adjust the top margin for swipeable categories
+  },
+  categoryWrapper: {
+    marginHorizontal: 5, // Adjust margin between cards in the ScrollView
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  flatListContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  categoryCard: {
+    backgroundColor: 'red',
+    margin: 5,
     padding: 10,
-  },
-  dealsContainer: {
-    marginBottom: 20,
-  },
-  dealsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: 'red',
-  },
-  dealItem: {
-    marginRight: 15,
-    alignItems: 'center',
-    width: 250,
-  },
-  dealImage: {
-    width: '100%',
-    height: 150,
     borderRadius: 10,
-    marginBottom: 10,
-  },
-  dealLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  featuredContainer: {
-    marginBottom: 20,
-  },
-  featuredTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: 'green',
-  },
-  featuredItem: {
-    marginRight: 15,
+    justifyContent: 'center',
     alignItems: 'center',
-    width: 200,
+    height: 180, // Increased height for better visibility
+    width: 150, // Consistent width for each category card
+    elevation: 5, // Shadow for Android
+    shadowColor: '#000', // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
-  featuredImage: {
-    width: '100%',
-    height: 120,
-    borderRadius: 10,
-    marginBottom: 5,
+  categoryImage: {
+    width: '100%', // Make the image take up the full width of the category card
+    height: 120,  // Set a fixed height to ensure it stays within the card
+    resizeMode: 'cover', // Scale the image to cover the area of the card
+    borderRadius: 10, // Optional: Add rounded corners to the image
   },
-  featuredLabel: {
-    fontSize: 14,
+  categoryText: {
+    color: 'white',
     fontWeight: 'bold',
-  },
-  featuredPrice: {
-    fontSize: 12,
-    color: '#888',
-  },
-  tabBar: {
-    backgroundColor: 'orange',
-  },
-  tabBarLabel: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: 'red',
-  },
-  tabBarIcon: {
-    width: 30,
-    height: 30,
-    resizeMode: 'contain',
+    marginTop: 10,
+    fontSize: 14, // Adjust font size for better visibility
+    textAlign: 'center', // Center the text under the image
+    width: '100%', // Ensure text width matches the image's width
   },
 });
 
-export default HomeTabNavigator;
+export default HomeScreen;

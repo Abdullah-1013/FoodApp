@@ -1,35 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
-import { supabase } from '../services/supabaseClient'; // Adjust the path based on your folder structure
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { supabase } from '../services/supabaseClient';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
 
   const handleLogin = async () => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      navigation.navigate('Home');
+      if (error) {
+        Alert.alert('Login Error', error.message);
+        return;
+      }
+
+      if (!data.user) {
+        // If no user data is returned, show user not found message
+        Alert.alert('User Not Found', 'No account found with this email. Please sign up.');
+        navigation.navigate('SignUp');
+      } else {
+        // On successful login, navigate to the Home screen
+        navigation.replace('Home');
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Log In</Text>
-      {error && <Text style={styles.error}>{error}</Text>}
+      <Text style={styles.title}>Login</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
-        placeholderTextColor="red"
       />
       <TextInput
         style={styles.input}
@@ -37,10 +44,9 @@ const LoginScreen = ({ navigation }) => {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
-        placeholderTextColor="red"
       />
-      <Button title="Log In" onPress={handleLogin} color="red" />
-      <Text style={styles.switchText} onPress={() => navigation.navigate('SignUp')}>
+      <Button title="Login" onPress={handleLogin} />
+      <Text onPress={() => navigation.navigate('SignUp')} style={styles.link}>
         Don't have an account? Sign Up
       </Text>
     </View>
@@ -50,33 +56,21 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'orange', // Background color
+    backgroundColor: 'orange',
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-    color: 'red', // Foreground color
-  },
+  title: { fontSize: 24, fontWeight: 'bold', color: 'red' },
   input: {
-    width: 300,
-    height: 40,
+    width: '80%',
+    padding: 10,
+    margin: 10,
     borderWidth: 1,
-    borderColor: 'red', // Border color
-    marginBottom: 20,
-    paddingLeft: 10,
-    color: 'red', // Text color
+    borderColor: 'red',
+    borderRadius: 5,
+    backgroundColor: 'white',
   },
-  error: {
-    color: 'red', // Foreground color for errors
-    marginBottom: 10,
-  },
-  switchText: {
-    color: 'red', // Foreground color
-    marginTop: 20,
-  },
+  link: { color: 'red', marginTop: 10 },
 });
 
 export default LoginScreen;

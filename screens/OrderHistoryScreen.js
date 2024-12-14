@@ -1,46 +1,66 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { supabase } from '../services/supabaseClient';  // Adjust the path based on your folder structure
+import { View, Text, StyleSheet, FlatList, Alert, ActivityIndicator } from 'react-native';
+import { supabase } from '../services/supabaseClient';
 
-const OrderHistoryScreen = () => {
+const OrdersScreen = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Fetch orders for the logged-in user
     const fetchOrders = async () => {
       const user = supabase.auth.user();
-      if (user) {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (error) {
-          console.error(error);
-        } else {
-          setOrders(data);
-        }
+      if (!user) {
+        // If no user is logged in, redirect to login
+        navigation.navigate('Login');
+        return;
       }
+
+      // Fetch orders for the current user from the orders table
+      const { data, error } = await supabase
+        .from('orders') // Replace 'orders' with your table name
+        .select('*')
+        .eq('user_id', user.id); // Get orders for the logged-in user
+
+      if (error) {
+        Alert.alert('Error', error.message);
+      } else {
+        setOrders(data); // Store orders data
+      }
+      setLoading(false); // Set loading to false once data is fetched
     };
 
     fetchOrders();
-  }, []);
+  }, [navigation]);
 
-  const renderOrder = ({ item }) => (
+  const renderItem = ({ item }) => (
     <View style={styles.orderItem}>
       <Text style={styles.orderText}>Order ID: {item.id}</Text>
-      <Text style={styles.orderText}>Total: ${item.total}</Text>
-      <Text style={styles.orderText}>Date: {item.created_at}</Text>
+      <Text style={styles.orderText}>Details: {item.order_details}</Text>
+      <Text style={styles.orderText}>Date: {item.order_date}</Text>
     </View>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="red" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Order History</Text>
-      <FlatList
-        data={orders}
-        renderItem={renderOrder}
-        keyExtractor={(item) => item.id}
-      />
+      {orders.length === 0 ? (
+        <Text style={styles.noOrdersText}>You have no past orders.</Text>
+      ) : (
+        <FlatList
+          data={orders}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+        />
+      )}
     </View>
   );
 };
@@ -48,26 +68,40 @@ const OrderHistoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
-    backgroundColor: '#FFA500', // Orange background color
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    backgroundColor: 'orange',
+    paddingTop: 20,
   },
   title: {
     fontSize: 24,
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#D32F2F', // Red text color for title
+    fontWeight: 'bold',
+    color: 'red',
+    marginBottom: 10,
   },
   orderItem: {
+    backgroundColor: 'white',
     padding: 15,
-    marginBottom: 15,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 3,
+    marginBottom: 10,
+    borderRadius: 5,
+    width: '90%',
+    borderWidth: 1,
+    borderColor: 'red',
   },
   orderText: {
+    color: 'red',
     fontSize: 16,
-    color: '#D32F2F', // Red text color for order details
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'orange',
+  },
+  noOrdersText: {
+    color: 'red',
+    fontSize: 18,
   },
 });
 
-export default OrderHistoryScreen;
+export default OrdersScreen;
