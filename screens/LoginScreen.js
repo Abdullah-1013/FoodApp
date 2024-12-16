@@ -21,7 +21,7 @@ const LoginScreen = ({ navigation }) => {
         navigation.navigate('SignUp');
       } else {
         // On successful login, navigate to the Home screen
-        navigation.replace('Home');
+        navigation.replace('HomeScreen');
       }
     } catch (error) {
       console.error('Error during login:', error);

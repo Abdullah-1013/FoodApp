@@ -1,42 +1,52 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { supabase } from '../services/supabaseClient'; // Adjust path as needed
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { supabase } from '../services/supabaseClient'; // Ensure correct path
 
-const GroceryScreen = ({ navigation }) => {
+const BurgerScreen = ({ navigation }) => {
   const [items, setItems] = useState([]);
-  const [cart, setCart] = useState([]); // Local cart state
+  const [cart, setCart] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data, error } = await supabase
-        .from('burgers') // Change table name if needed
-        .select('*');
-      if (error) {
-        console.error('Error fetching data:', error);
-      } else {
-        setItems(data);
+      try {
+        const { data, error } = await supabase
+          .from('burgers') // Replace with your actual table name
+          .select('*');
+
+        if (error) {
+          console.error('Error fetching data:', error.message);
+          Alert.alert('Data Fetch Error', error.message);
+        } else {
+          console.log('Fetched data:', data);
+          setItems(data);
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err.message);
+        Alert.alert('Unexpected Error', err.message);
       }
     };
 
     fetchData();
   }, []);
 
-  // Add item to cart
   const addToCart = (item) => {
-    setCart((prevCart) => [...prevCart, item]); // Add item to cart
-    console.log('Item added to cart:', item);
+    console.log('Add to Cart clicked for item:', item);
+    setCart((prevCart) => [...prevCart, item]);
+    Alert.alert('Added to Cart', `${item.name} added successfully.`);
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.image} />
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.price}>${item.price}</Text>
-      <Text style={styles.rating}>Rating: {item.rating}</Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => addToCart(item)} // Add item to cart
-      >
+      {/* Fallback image in case item.image is undefined or invalid */}
+      <Image
+        source={{ uri: item.image || 'https://via.placeholder.com/150' }} // Default placeholder image
+        style={styles.image}
+        onError={(e) => console.log('Image loading error:', e.nativeEvent.error)} // Error handling for image
+      />
+      <Text style={styles.name}>{item.name || 'No name available'}</Text>
+      <Text style={styles.price}>${item.price || 'N/A'}</Text>
+      <Text style={styles.rating}>Rating: {item.rating || 'N/A'}</Text>
+      <TouchableOpacity style={styles.button} onPress={() => addToCart(item)}>
         <Text style={styles.buttonText}>Add to Cart</Text>
       </TouchableOpacity>
     </View>
@@ -44,26 +54,31 @@ const GroceryScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={items}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.list}
-      />
+      {/* Main Content */}
+      {items.length > 0 ? (
+        <FlatList
+          data={items}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.list}
+        />
+      ) : (
+        <Text style={styles.noItemsText}>No items available. Please try again later.</Text>
+      )}
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Home')}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('HomeScreen')}>
           <Image source={require('./assets/icons/home.png')} style={styles.icon} />
           <Text style={styles.iconText}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => console.log('Navigate to Order')}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Order')}>
           <Image source={require('./assets/icons/orders.png')} style={styles.icon} />
-          <Text style={styles.iconText}>Order</Text>
+          <Text style={styles.iconText}>Orders</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={() => navigation.navigate('Cart', { cart })} // Pass cart to CartScreen
+          onPress={() => navigation.navigate('Cart', { cart })}
         >
           <Image source={require('./assets/icons/cart.png')} style={styles.icon} />
           <Text style={styles.iconText}>Cart</Text>
@@ -146,6 +161,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
   },
+  noItemsText: {
+    fontSize: 16,
+    color: 'black',
+    textAlign: 'center',
+    marginTop: 20,
+  },
 });
 
-export default GroceryScreen;
+export default BurgerScreen;

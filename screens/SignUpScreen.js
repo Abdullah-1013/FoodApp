@@ -27,7 +27,7 @@ const SignUpScreen = ({ navigation }) => {
     } else {
       // On successful sign-up, navigate to Login screen
       Alert.alert('Success', 'Account created successfully. Please log in.');
-      navigation.navigate('Login');
+      navigation.navigate('HomeScreen');
     }
   };
 
