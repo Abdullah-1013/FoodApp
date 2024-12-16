@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { supabase } from '../services/supabaseClient'; // Ensure correct path
 
-const BurgerScreen = ({ navigation }) => {
+const PizzaScreen = ({ navigation }) => {
   const [items, setItems] = useState([]);
   const [cart, setCart] = useState([]);
 
@@ -169,4 +169,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BurgerScreen;
+export default PizzaScreen;
