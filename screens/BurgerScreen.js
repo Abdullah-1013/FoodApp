@@ -37,7 +37,6 @@ const BurgerScreen = ({ navigation }) => {
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      {/* Fallback image in case item.image is undefined or invalid */}
       <Image
         source={{ uri: item.image || 'https://via.placeholder.com/150' }} // Default placeholder image
         style={styles.image}
@@ -78,7 +77,7 @@ const BurgerScreen = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={() => navigation.navigate('Cart', { cart })}
+          onPress={() => navigation.navigate('Cart', { cart })} // Passing cart data
         >
           <Image source={require('./assets/icons/cart.png')} style={styles.icon} />
           <Text style={styles.iconText}>Cart</Text>
@@ -88,85 +87,22 @@ const BurgerScreen = ({ navigation }) => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'orange',
-    paddingTop: 20,
-  },
-  list: {
-    paddingHorizontal: 10,
-  },
-  card: {
-    backgroundColor: 'white',
-    marginBottom: 20,
-    padding: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  image: {
-    width: 150,
-    height: 100,
-    borderRadius: 10,
-    resizeMode: 'cover',
-  },
-  name: {
-    color: 'red',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
-  },
-  price: {
-    color: 'black',
-    fontSize: 16,
-  },
-  rating: {
-    color: 'black',
-    fontSize: 14,
-  },
-  button: {
-    backgroundColor: 'red',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-  },
-  bottomBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: 'red',
-    paddingVertical: 10,
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    alignItems: 'center',
-  },
-  iconButton: {
-    alignItems: 'center',
-  },
-  icon: {
-    width: 30,
-    height: 30,
-    resizeMode: 'contain',
-  },
-  iconText: {
-    color: 'white',
-    fontSize: 12,
-  },
-  noItemsText: {
-    fontSize: 16,
-    color: 'black',
-    textAlign: 'center',
-    marginTop: 20,
-  },
+  container: { flex: 1, backgroundColor: 'orange', paddingTop: 20 },
+  list: { paddingHorizontal: 10 },
+  card: { backgroundColor: 'white', marginBottom: 20, padding: 10, borderRadius: 10, alignItems: 'center' },
+  image: { width: 150, height: 100, borderRadius: 10, resizeMode: 'cover' },
+  name: { color: 'red', fontSize: 18, fontWeight: 'bold', marginVertical: 10 },
+  price: { color: 'black', fontSize: 16 },
+  rating: { color: 'black', fontSize: 14 },
+  button: { backgroundColor: 'red', padding: 10, borderRadius: 5, marginTop: 10 },
+  buttonText: { color: 'white', fontSize: 16 },
+  bottomBar: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: 'red', paddingVertical: 10, position: 'absolute', bottom: 0, width: '100%' },
+  iconButton: { alignItems: 'center' },
+  icon: { width: 30, height: 30, resizeMode: 'contain' },
+  iconText: { color: 'white', fontSize: 12 },
+  noItemsText: { fontSize: 16, color: 'black', textAlign: 'center', marginTop: 20 },
 });
 
 export default BurgerScreen;

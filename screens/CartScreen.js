@@ -1,82 +1,66 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import supabase from '../services/supabaseClient';
+import { View, Text, Button, FlatList, Alert } from 'react-native';
+import { supabase } from '../services/supabaseClient';
 
-export default function CartScreen() {
-  const [cartItems, setCartItems] = useState([]); // Cart data will be added locally
+const CartScreen = ({ route, navigation }) => {
+  const { cart } = route.params; // Get cart data passed from BurgerScreen
   const [loading, setLoading] = useState(false);
 
-  // Fetch items from other screens and add them to the cart
-  const addToCart = (item) => {
-    setCartItems([...cartItems, item]);
-  };
-
-  // Place order and save to the 'orders' table
   const placeOrder = async () => {
-    if (cartItems.length === 0) {
-      alert('Your cart is empty.');
+    if (cart.length === 0) {
+      Alert.alert('Cart is empty', 'Add items to your cart before placing the order.');
       return;
     }
 
     setLoading(true);
 
-    const userId = supabase.auth.user().id;
+    try {
+      const { data, error } = await supabase
+        .from('orders') // Replace with your actual table name
+        .insert(cart); // Insert all cart items into orders table
 
-    const orderData = cartItems.map((item) => ({
-      user_id: userId,
-      item_name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      status: 'Pending',
-      created_at: new Date().toISOString(),
-    }));
+      if (error) {
+        throw error;
+      }
 
-    const { data, error } = await supabase.from('orders').insert(orderData);
+      Alert.alert('Order Placed', 'Your order has been placed successfully!');
+      setLoading(false);
 
-    if (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place the order. Please try again.');
-    } else {
-      alert('Order placed successfully!');
-      setCartItems([]); // Clear the cart after placing the order
+      // Clear cart or reset to an empty array
+      navigation.navigate('Order');
+    } catch (error) {
+      setLoading(false);
+      console.error('Error placing order:', error.message);
+      Alert.alert('Error', 'Failed to place the order. Please try again.');
     }
-
-    setLoading(false);
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Cart</Text>
-      {loading ? (
-        <Text>Loading...</Text>
+    <View style={{ flex: 1, padding: 20, backgroundColor: 'orange' }}>  {/* Orange background */}
+      <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'red' }}>Cart</Text>  {/* Red text color */}
+
+      {cart.length > 0 ? (
+        <FlatList
+          data={cart}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={{ marginVertical: 10 }}>
+              <Text style={{ color: 'red' }}>{item.name}</Text>  {/* Red text color for item names */}
+              <Text style={{ color: 'red' }}>Price: ${item.price}</Text>  {/* Red text color for price */}
+            </View>
+          )}
+        />
       ) : (
-        <>
-          <FlatList
-            data={cartItems}
-            renderItem={({ item }) => (
-              <View style={styles.item}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.details}>Price: ${item.price}</Text>
-                <Text style={styles.details}>Quantity: {item.quantity}</Text>
-              </View>
-            )}
-            keyExtractor={(item, index) => index.toString()}
-          />
-          <TouchableOpacity style={styles.button} onPress={placeOrder}>
-            <Text style={styles.buttonText}>Place Order</Text>
-          </TouchableOpacity>
-        </>
+        <Text style={{ color: 'red' }}>No items in the cart</Text>  
       )}
+
+      <Button
+        title={loading ? 'Placing Order...' : 'Place Order'}
+        onPress={placeOrder}
+        disabled={loading}
+      />
     </View>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-  item: { marginBottom: 15 },
-  name: { fontSize: 18, fontWeight: 'bold' },
-  details: { fontSize: 16 },
-  button: { backgroundColor: 'orange', padding: 15, borderRadius: 10, marginTop: 20 },
-  buttonText: { color: '#fff', textAlign: 'center', fontSize: 18, fontWeight: 'bold' },
-});
+export default CartScreen;
