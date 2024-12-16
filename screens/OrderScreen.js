@@ -2,44 +2,51 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import supabase from '../services/supabaseClient';
 
-export default function OrderScreen() {
+export default function OrderHistoryScreen() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrderHistory();
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrderHistory = async () => {
     setLoading(true);
+    const userId = supabase.auth.user().id;
+
     const { data, error } = await supabase
       .from('orders')
-      .select('id, quantity, status, items(name, price, picture, rating)')
-      .eq('user_id', supabase.auth.user().id);
+      .select('id, item_name, price, quantity, status, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
     if (error) {
-      console.error(error);
+      console.error('Error fetching order history:', error);
+      alert('Failed to fetch order history. Please try again.');
     } else {
       setOrders(data);
     }
+
     setLoading(false);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Your Orders</Text>
+      <Text style={styles.title}>Order History</Text>
       {loading ? (
         <Text>Loading...</Text>
-      ) : orders.length === 0 ? (
-        <Text>No orders found.</Text>
       ) : (
         <FlatList
           data={orders}
           renderItem={({ item }) => (
-            <View style={styles.order}>
-              <Text style={styles.name}>{item.items.name}</Text>
-              <Text style={styles.details}>Price: ${item.items.price}</Text>
+            <View style={styles.item}>
+              <Text style={styles.name}>{item.item_name}</Text>
+              <Text style={styles.details}>Price: ${item.price}</Text>
               <Text style={styles.details}>Quantity: {item.quantity}</Text>
               <Text style={styles.details}>Status: {item.status}</Text>
+              <Text style={styles.details}>
+                Date: {new Date(item.created_at).toLocaleDateString()}
+              </Text>
             </View>
           )}
           keyExtractor={(item) => item.id.toString()}
@@ -52,7 +59,7 @@ export default function OrderScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 10 },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-  order: { marginBottom: 15, padding: 10, backgroundColor: '#f9f9f9', borderRadius: 8 },
+  item: { marginBottom: 15 },
   name: { fontSize: 18, fontWeight: 'bold' },
   details: { fontSize: 16 },
 });
