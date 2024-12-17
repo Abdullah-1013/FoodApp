@@ -10,7 +10,7 @@ const OrderScreen = () => {
       try {
         const { data, error } = await supabase
           .from('orders')
-          .select('*'); // Fetch all orders from the table
+          .select('*'); // Fetch all orders from the orders table
 
         if (error) {
           throw error;
@@ -27,8 +27,8 @@ const OrderScreen = () => {
   }, []);
 
   return (
-    <View style={{ flex: 1, padding: 20, backgroundColor: 'orange' }}>  {/* Orange background */}
-      <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'red' }}>Order History</Text>  {/* Red text color */}
+    <View style={{ flex: 1, padding: 20, backgroundColor: 'orange' }}>
+      <Text style={{ fontSize: 20, fontWeight: 'bold', color: 'red' }}>Order History</Text>
 
       {orders.length > 0 ? (
         <FlatList
@@ -36,13 +36,16 @@ const OrderScreen = () => {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={{ marginVertical: 10 }}>
-              <Text style={{ color: 'red' }}>{item.name}</Text>  {/* Red text color for item names */}
-              <Text style={{ color: 'red' }}>Price: ${item.price}</Text>  {/* Red text color for price */}
+              <Text style={{ color: 'red' }}>Order ID: {item.id}</Text>
+              <Text style={{ color: 'red' }}>Total Price: ${item.total_price}</Text>
+              <Text style={{ color: 'red' }}>Order Date: {new Date(item.order_date).toLocaleDateString()}</Text>
+              <Text style={{ color: 'red' }}>Order Time: {new Date(item.order_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</Text>
+              <Text style={{ color: 'red' }}>Status: {item.status}</Text>
             </View>
           )}
         />
       ) : (
-        <Text style={{ color: 'red' }}>No orders yet</Text>  
+        <Text style={{ color: 'red' }}>No orders yet</Text>
       )}
     </View>
   );

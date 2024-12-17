@@ -35,7 +35,7 @@ const BurgerScreen = ({ navigation }) => {
     Alert.alert('Added to Cart', `${item.name} added successfully.`);
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item, index }) => (
     <View style={styles.card}>
       <Image
         source={{ uri: item.image || 'https://via.placeholder.com/150' }} // Default placeholder image
@@ -58,7 +58,7 @@ const BurgerScreen = ({ navigation }) => {
         <FlatList
           data={items}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => `${item.id}-${Math.random()}`} // Ensure unique keys by appending a random value
           contentContainerStyle={styles.list}
         />
       ) : (
